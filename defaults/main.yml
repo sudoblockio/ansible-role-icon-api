@@ -2,3 +2,6 @@
 
 username: ubuntu
 endpoint_url: # blank for default url
+
+fqdn:
+ssl_enable: false

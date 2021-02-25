@@ -3,7 +3,7 @@ ansible-role-icon-api
 
 Role to install prerequisites for running the [icon-api](https://github.com/geometry-labs/icon-api) stack for the ICON Blockchain.
 
-See also [geometry-labs/terraform-aws-icon-api-ec2](https://github.com/geometry-labs/terraform-aws-icon-api-ec2).
+See also [geometry-labs/terraform-icon-aws-api-ec2](https://github.com/geometry-labs/terraform-icon-aws-api-ec2).
 
 Requirements
 ------------
@@ -30,5 +30,4 @@ BSD
 Author Information
 ------------------
 
-An optional section for the role authors to include contact information, or a
-website (HTML is not allowed).
+Geometry Labs, Inc. 
