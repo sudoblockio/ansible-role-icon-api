@@ -1,0 +1,106 @@
+---
+
+- name: Update and upgrade apt packages
+  apt:
+    update_cache: yes
+    upgrade: "yes" # Needs to be quoted
+    force_apt_get: yes
+    cache_valid_time: 86400 #One day
+
+- name: Install required packages
+  apt:
+    name: "{{ packages }}"
+    force_apt_get: yes
+    state: present
+  vars:
+    packages:
+      - apt-transport-https
+      - software-properties-common
+      - ca-certificates
+      - python3
+      - python3-pip
+      - awscli
+      - linux-aws
+      - curl
+      - jq
+
+- name: copy journald config
+  copy:
+    src: journald.conf
+    dest: /etc/systemd/journald.conf
+
+- name: restart journald
+  systemd:
+    name: systemd-journald
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  changed_when: false
+
+- name: Install pip3 packages
+  pip:
+    name: "{{ pippkgs }}"
+    executable: pip3
+    state: present
+  vars:
+    pippkgs:
+      - pip
+      - docker
+      - tackle-box
+
+#- name: Render env file
+#  template:
+#    src: "{{ role_path }}/templates/.env.j2"
+#    dest: /home/{{ username }}/.env
+#    mode: '0644'
+#    owner: "{{ username }}"
+#    group: "{{ admin_group }}"
+
+- name: Run certbot for SSL
+  include_role:
+    name: geerlingguy.certbot
+  vars:
+    certbot_create_if_missing: true
+    certbot_admin_email: "{{ certbot_admin_email }}"
+    certbot_certs:
+      - domains:
+          - "{{ fqdn }}"
+    certbot_create_standalone_stop_services: []
+  when: ssl_enable
+
+# TODO: Enable when https is in Traefik
+#- name: Create fullchain cert symbolic link
+#  file:
+#    src: /etc/letsencrypt/live/{{ fqdn }}/fullchain.pem
+#    dest: /home/{{ username }}/superset/certs/fullchain.pem
+#    owner: "{{ username }}"
+#    group: "{{ group_name }}"
+#    state: link
+#  when: ssl_enable
+#
+#- name: Create fullchain cert symbolic link
+#  file:
+#    src: /etc/letsencrypt/live/{{ fqdn }}/privkey.pem
+#    dest: /home/{{ username }}/superset/certs/privkey.pem
+#    owner: "{{ username }}"
+#    group: "{{ group_name }}"
+#    state: link
+#  when: ssl_enable
+
+- name: Check if repo exists
+  stat:
+    path: "/home/{{ username }}/icon-api"
+  register: git_dir
+
+- name: Clone icon-api repo
+  git:
+    repo: "https://github.com/geometry-labs/icon-api"
+    dest: "/home/{{ username }}/icon-api"
+    version: main
+  become_user: "{{ username }}"
+  when: not git_dir.stat.exists
+
+- name: Start node application via docker-compose
+  args:
+    chdir: "/home/{{ username }}"
+  shell: docker-compose -f docker-compose.yml up -d
