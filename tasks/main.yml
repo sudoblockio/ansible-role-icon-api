@@ -19,6 +19,7 @@
       - ca-certificates
       - python3
       - python3-pip
+      - python3-setuptools
       - awscli
       - linux-aws
       - curl
@@ -44,6 +45,7 @@
     state: present
   vars:
     pippkgs:
+      - setuptools
       - pip
       - docker
       - tackle-box
@@ -66,7 +68,7 @@
       - domains:
           - "{{ fqdn }}"
     certbot_create_standalone_stop_services: []
-  when: ssl_enable
+  when: ssl_enable | bool
 
 # TODO: Enable when https is in Traefik
 #- name: Create fullchain cert symbolic link
@@ -100,7 +102,7 @@
   become_user: "{{ username }}"
   when: not git_dir.stat.exists
 
-- name: Start node application via docker-compose
-  args:
-    chdir: "/home/{{ username }}"
-  shell: docker-compose -f docker-compose.yml up -d
+#- name: Start node application via docker-compose
+#  args:
+#    chdir: "/home/{{ username }}"
+#  shell: docker-compose -f docker-compose.yml up -d
